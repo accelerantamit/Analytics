@@ -4,28 +4,39 @@ sources:
   - name: jaffle_shop
     database: raw  
     schema: jaffle_shop
+    freshness:
+          warn_after: {count: 24, period: hour}
+          error_after: {count: 1, period: day}
+    loaded_at_field: _ETL_LOADED_AT
+
     tables:
       - name: customers
+        freshness: null
       - name: orders
-        loaded_at_field: _ETL_LOADED_AT
         freshness:
-          warn_after: {count: 12, period: hour}
-          error_after: {count: 24, period: hour}
+          warn_after: {count: 24, period: hour}
+          error_after: {count: 1, period: day}
+        loaded_at_field: _ETL_LOADED_AT
     
 models:
   - name: stg_customer
+    description: One unique cunstomer per row
     columns:
       - name: customer_id
+        description: primary key
         tests:
          - unique
          - not_null
   - name: stg_orders
+    description: One unique order per row
     columns:
       - name: order_id
+        description: primary key
         tests:
          - unique
          - not_null
       - name: status
+        description: '{{ doc("order_status") }}'
         tests:
           - accepted_values:
               values:
@@ -34,6 +45,12 @@ models:
                 - return_pending
                 - shipped
                 - placed
+      - name: customer_id
+        description: Foreign key to stg_customers.customer_id.
+        tests:
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
 
         
         
